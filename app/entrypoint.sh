@@ -32,7 +32,7 @@ websockify_pid=$!
 (
   cd /opt/lens
   while true; do
-    ./kontena-lens --no-sandbox
+    ./open-lens --no-sandbox
   done
 ) >/tmp/lens.log 2>&1 &
 echo $! >/tmp/lens.pid
