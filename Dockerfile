@@ -1,28 +1,17 @@
-FROM node:21-bookworm
+FROM jlesage/baseimage-gui:debian-11-v4
 ARG LENS_VERSION=6.5.2-366
 
-ENV DISPLAY=:0
-ENV PORT=8080
-ENV DEBIAN_FRONTEND=noninteractive
+RUN add-pkg curl libnss3 libglib2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 libx11-xcb1 libasound2 libxss1 libgbm1
 
-COPY --from=mattipaksula/wait-for:sha-2a34cde /wait-for /usr/bin
+RUN  curl -LOk https://github.com/MuhammedKalkan/OpenLens/releases/download/v${LENS_VERSION}/OpenLens-${LENS_VERSION}.x86_64.AppImage \
+  && mv OpenLens-${LENS_VERSION}.x86_64.AppImage lens.AppImage \
+  && chmod +x lens.AppImage \
+  && ./lens.AppImage --appimage-extract \
+  && mv squashfs-root /opt/lens \
+  && chmod +x /opt/lens/open-lens \
+  && rm lens.AppImage \
+  && take-ownership /opt/lens
 
-RUN apt-get update && apt-get install -y \
-  curl git \
-  xvfb x11vnc \
-  libnss3 libglib2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 libx11-xcb1 libasound2 libxss1 libgbm1
+RUN set-cont-env APP_NAME "Lens"
 
-WORKDIR /opt
-RUN git clone https://github.com/novnc/websockify-js.git \
-  && cd websockify-js/websockify && npm install
-
-RUN curl -LO https://github.com/MuhammedKalkan/OpenLens/releases/download/v${LENS_VERSION}/OpenLens-${LENS_VERSION}.x86_64.AppImage
-
-RUN  chmod +x OpenLens-${LENS_VERSION}.x86_64.AppImage \
-  && ./OpenLens-${LENS_VERSION}.x86_64.AppImage --appimage-extract \
-  && mv ./squashfs-root /opt/lens
-
-WORKDIR /app
-COPY app .
-
-ENTRYPOINT [ "/app/entrypoint.sh" ]
+COPY startapp.sh /startapp.sh
